@@ -1,1 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk.Web"><ItemGroup><ProjectReference Include="../OpsPilot.Application/OpsPilot.Application.csproj" /><ProjectReference Include="../OpsPilot.Contracts/OpsPilot.Contracts.csproj" /><PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" /><PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.2.0" /></ItemGroup></Project>
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <SpaRoot>../OpsPilot.Web/</SpaRoot>
+    <SpaProxyServerUrl>http://localhost:3000</SpaProxyServerUrl>
+    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../OpsPilot.Application/OpsPilot.Application.csproj" />
+    <ProjectReference Include="../OpsPilot.Contracts/OpsPilot.Contracts.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="8.0.28" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+  <Target Name="EnsureNodeDependencies" BeforeTargets="Build"
+          Condition="'$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules')">
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
+  </Target>
+</Project>

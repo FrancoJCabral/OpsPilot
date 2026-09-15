@@ -3,10 +3,12 @@
     "OpsPilot.Api": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.SpaProxy"
       },
-      "applicationUrl": "https://localhost:57671;http://localhost:57672"
+      "applicationUrl": "http://localhost:57672"
     }
   }
 }
