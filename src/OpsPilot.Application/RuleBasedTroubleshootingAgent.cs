@@ -3,12 +3,16 @@ namespace OpsPilot.Application;
 
 public sealed class RuleBasedTroubleshootingAgent : ITroubleshootingAgent
 {
-    public TroubleshootingAnalysis Analyze(TechnicalIncident incident)
+    public TroubleshootingAnalysis Analyze(
+        TechnicalIncident incident,
+        IReadOnlyList<RunbookSearchResult> context)
     {
         ArgumentNullException.ThrowIfNull(incident);
-        return incident.ServiceName.ToLowerInvariant() switch
+        ArgumentNullException.ThrowIfNull(context);
+
+        var result = incident.ServiceName.ToLowerInvariant() switch
         {
-            "payments" => new(
+            "payments" => new TroubleshootingAnalysis(
                 "Payment service incident requires investigation.",
                 "Deployment configuration or an unavailable payment dependency.",
                 "Check deployment changes, service logs and payment provider health; consider rollback.", 0.65),
@@ -24,6 +28,15 @@ public sealed class RuleBasedTroubleshootingAgent : ITroubleshootingAgent
                 "No troubleshooting rule is available for this service.",
                 "Unknown; available information is insufficient.",
                 "Collect service logs, recent changes and dependency health for manual investigation.", 0.20)
+        };
+
+        if (context.Count == 0)
+            return result;
+
+        return result with
+        {
+            RecommendedAction = $"{result.RecommendedAction} Consult the matched runbook before applying changes.",
+            Confidence = Math.Min(0.90, result.Confidence + 0.10)
         };
     }
 }
