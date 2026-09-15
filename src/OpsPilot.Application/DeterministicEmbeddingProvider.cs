@@ -29,6 +29,6 @@ public sealed partial class DeterministicEmbeddingProvider : IEmbeddingProvider
         return Task.FromResult(vector);
     }
 
-    [GeneratedRegex(@"[p{L}p{N}]+")]
+    [GeneratedRegex("[A-Za-z0-9]+")]
     private static partial Regex TokenPattern();
 }
