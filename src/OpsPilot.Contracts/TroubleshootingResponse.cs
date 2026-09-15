@@ -4,4 +4,6 @@ public sealed record TroubleshootingResponse(
     string ProbableCause,
     string RecommendedAction,
     double Confidence,
-    string[] Sources);
+    string[] Sources,
+    string[] Evidence,
+    string[] ToolsUsed);

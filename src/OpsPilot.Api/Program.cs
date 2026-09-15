@@ -2,6 +2,8 @@ using Microsoft.Extensions.Options;
 using OpsPilot.Application;
 using OpsPilot.Contracts;
 using OpsPilot.Domain;
+using OpsPilot.Application.Tools;
+using OpsPilot.Api.Mcp;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
@@ -21,6 +23,12 @@ builder.Services.AddScoped<IRunbookSearchService>(
     services => services.GetRequiredService<QdrantRunbookService>());
 builder.Services.AddSingleton<ITroubleshootingAgent, RuleBasedTroubleshootingAgent>();
 
+builder.Services.AddSingleton<ITechnicalTools, LocalTechnicalTools>();
+builder.Services.AddScoped<TroubleshootingWorkflow>();
+builder.Services.AddMcpServer()
+    .WithHttpTransport()
+    .WithTools<TroubleshootingTools>();
+
 var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
@@ -29,6 +37,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapMcp("/mcp");
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "healthy" }));
 
@@ -41,8 +51,7 @@ app.MapPost("/api/runbooks/index", async (
 
 app.MapPost("/api/troubleshooting/analyze", async (
     TroubleshootingRequest request,
-    IRunbookSearchService search,
-    ITroubleshootingAgent agent,
+    TroubleshootingWorkflow workflow,
     CancellationToken cancellationToken) =>
 {
     var errors = new Dictionary<string, string[]>();
@@ -55,15 +64,15 @@ app.MapPost("/api/troubleshooting/analyze", async (
 
     var incident = new TechnicalIncident(
         "Troubleshooting request", request.Issue, request.ServiceName, Severity.Medium);
-    var context = await search.SearchAsync(
-        $"{incident.ServiceName} {incident.Description}", cancellationToken: cancellationToken);
-    var result = agent.Analyze(incident, context);
+    var result = await workflow.AnalyzeAsync(incident, cancellationToken);
     return Results.Ok(new TroubleshootingResponse(
-        result.Summary,
-        result.ProbableCause,
-        result.RecommendedAction,
-        result.Confidence,
-        context.Select(item => item.Source).Distinct().ToArray()));
+        result.Analysis.Summary,
+        result.Analysis.ProbableCause,
+        result.Analysis.RecommendedAction,
+        result.Analysis.Confidence,
+        result.Sources,
+        result.Evidence,
+        result.ToolsUsed));
 })
 .Produces<TroubleshootingResponse>()
 .ProducesValidationProblem();

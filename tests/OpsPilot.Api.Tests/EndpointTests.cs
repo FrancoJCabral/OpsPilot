@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpsPilot.Application;
+using OpsPilot.Application.Tools;
 using OpsPilot.Contracts;
 using Xunit;
 namespace OpsPilot.Api.Tests;
@@ -46,6 +47,10 @@ public sealed class EndpointTests : IClassFixture<OpsPilotFactory>
         Assert.NotNull(result);
         Assert.Contains(causeFragment, result.ProbableCause);
         Assert.NotEmpty(result.Sources);
+        Assert.NotEmpty(result.Evidence);
+        Assert.Equal(
+            [ToolNames.Health, ToolNames.Logs, ToolNames.Deployments],
+            result.ToolsUsed);
         var repeated = await second.Content.ReadFromJsonAsync<TroubleshootingResponse>();
         Assert.NotNull(repeated);
         Assert.Equal(result.Summary, repeated.Summary);
@@ -53,6 +58,8 @@ public sealed class EndpointTests : IClassFixture<OpsPilotFactory>
         Assert.Equal(result.RecommendedAction, repeated.RecommendedAction);
         Assert.Equal(result.Confidence, repeated.Confidence);
         Assert.Equal(result.Sources, repeated.Sources);
+        Assert.Equal(result.Evidence, repeated.Evidence);
+        Assert.Equal(result.ToolsUsed, repeated.ToolsUsed);
     }
 
     [Fact]
@@ -66,6 +73,9 @@ public sealed class EndpointTests : IClassFixture<OpsPilotFactory>
         Assert.Equal("Unknown; available information is insufficient.", result.ProbableCause);
         Assert.Equal(0.20, result.Confidence);
         Assert.Empty(result.Sources);
+        Assert.Single(result.Evidence);
+        Assert.Equal([ToolNames.Health], result.ToolsUsed);
+        Assert.Contains("unknown", result.Evidence[0], StringComparison.OrdinalIgnoreCase);
     }
 
     [Theory]
